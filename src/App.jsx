@@ -1,121 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './hooks/useAuth'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
-function App() {
-  const [count, setCount] = useState(0)
+import Home from './pages/Home.jsx'
+import RoleSelect from './pages/RoleSelect.jsx'
+import Login from './pages/Login.jsx'
+import Signup from './pages/Signup.jsx'
+import Claim from './pages/Claim.jsx'
+import NotFound from './pages/NotFound.jsx'
+import Unauthorized from './pages/Unauthorized.jsx'
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+import Scan from './pages/patient/Scan.jsx'
+import Results from './pages/patient/Results.jsx'
+import Profile from './pages/patient/Profile.jsx'
 
-      <div className="ticks"></div>
+import DoctorDashboard from './pages/doctor/DoctorDashboard.jsx'
+import DoctorWalkin from './pages/doctor/DoctorWalkin.jsx'
+import DoctorPatient from './pages/doctor/DoctorPatient.jsx'
+import DoctorMessages from './pages/doctor/DoctorMessages.jsx'
+import DoctorAnalytics from './pages/doctor/DoctorAnalytics.jsx'
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+import Messages from './pages/shared/Messages.jsx'
+import Notifications from './pages/shared/Notifications.jsx'
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function PatientRoute({ children }) {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'patient') return <Navigate to="/unauthorized" replace />
+  return children
 }
 
-export default App
+function DoctorRoute({ children }) {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'doctor') return <Navigate to="/unauthorized" replace />
+  return children
+}
+
+function AuthRoute({ children }) {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  return children
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<Home />} />
+        <Route path="/role" element={<RoleSelect />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/claim" element={<Claim />} />
+
+        {/* Patient only */}
+        <Route path="/scan" element={<PatientRoute><Scan /></PatientRoute>} />
+        <Route path="/results/:scanId" element={<PatientRoute><Results /></PatientRoute>} />
+        <Route path="/profile" element={<PatientRoute><Profile /></PatientRoute>} />
+
+        {/* Doctor only */}
+        <Route path="/doctor/dashboard" element={<DoctorRoute><DoctorDashboard /></DoctorRoute>} />
+        <Route path="/doctor/walkin" element={<DoctorRoute><DoctorWalkin /></DoctorRoute>} />
+        <Route path="/doctor/patient/:id" element={<DoctorRoute><DoctorPatient /></DoctorRoute>} />
+        <Route path="/doctor/messages" element={<DoctorRoute><DoctorMessages /></DoctorRoute>} />
+        <Route path="/doctor/analytics" element={<DoctorRoute><DoctorAnalytics /></DoctorRoute>} />
+
+        {/* Shared authenticated */}
+        <Route path="/messages/:threadId" element={<AuthRoute><Messages /></AuthRoute>} />
+        <Route path="/notifications" element={<AuthRoute><Notifications /></AuthRoute>} />
+
+        {/* Fallback */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </ErrorBoundary>
+  )
+}
